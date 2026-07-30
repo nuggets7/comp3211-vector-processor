@@ -12,4 +12,4 @@ List of Tasks:
 - Nothing for a no-op...fix: add 0 to reg 0
 - Program Counter- Esha
 - ALU [SELECT lines for add, sub, mul, div, 2- 32 bit things going in, 1 32 bit going out]- Esha
-- Special IN/OUT instruction [read in 2 cycles] (need to be gutted from the)
+- Special IN/OUT instruction [read in 2 cycles] (need to be gutted from lab2)
