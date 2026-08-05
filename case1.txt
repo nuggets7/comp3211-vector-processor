@@ -1,0 +1,100 @@
+Sample Benchmark
+
+Same but 4 marks fields of 8 bits each, allowing us to use VADD
+Stream raw dataset into DMEM
+
+Each IN input will be an 8 bit value stored in a 32 bit register.
+It will go in order of ID, M1, M2, M3, M4
+
+R1 = write pointer
+R2 = field counter
+R3 = ID
+R4 = M1
+R5 = M2
+R6 = M3
+R7 = M4
+R8 = Total
+
+
+R30 = Mark Cap (100)
+R29 = total count (100)
+R28 = total students (20)
+
+R10 = Read IN
+R11 = Total DMEM offset
+R13 = Processed records
+R14 = DMEM offset pointer
+
+R15 = Current total
+R16 = Sum of totals
+R17 = Num records
+R18 = Average of totals
+
+ADDI    R28, R28, 20
+ADDI    R29, R29, 100 (100 = 20 students * 5 values each)
+ADDI    R30, R30, 100
+
+
+Read_Loop:
+    IN      R10
+    STORE   R10, 0(R1)
+    ADDI    R1, R1, 1
+    ADDI    R2, R2, 1
+    NOOP
+    NOOP
+    NOOP
+    BLT     R2, R29, Read_Loop
+
+ADD     R11, R1, R0
+ADD     R1, R0, R0
+ADD     R2, R0, R0
+
+Proc_Loop:
+    LOAD    R3, 0(R1)
+    LOAD    R4, 1(R1)
+    LOAD    R5, 2(R1)
+    LOAD    R6, 3(R1)
+    LOAD    R7, 4(R1)
+
+    ADD     R8, R4, R5
+    ADD     R8, R8, R6
+    ADD     R8, R8, R7 
+    NOOP
+    NOOP
+    NOOP
+    BLT     R8, R30, Cap_Ok
+    ADD     R8, R30, R0
+
+Cap_Ok:
+
+    ADD     R14, R11, R13
+    STORE   R8, 0(R14)
+    ADDI    R13, R13, 1
+
+Next_ID:
+
+    ADD     R1, R1, 5
+    NOOP
+    NOOP
+    NOOP
+    BLT     R13, R28, Proc_Loop
+
+ADD     R1, R0, R0
+
+Avg_Totals:
+    ADD     R14, R11, R1
+    LOAD    R15, 0(R14)
+    ADD     R16, R16, R15
+    ADDI    R17, R17, 1
+    NOOP
+    NOOP
+    NOOP
+    BLT     R17, R28, Avg_Totals
+
+DIV     R18, R16, R28
+OUT     R18
+
+
+
+
+
