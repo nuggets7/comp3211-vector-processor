@@ -9,6 +9,10 @@ module alu (
             RESULT = A + B;
         else if (SUB_SEL)
             RESULT = A - B;
+        else if (AND_SEL)
+            RESULT = A & B;
+        else if (OR_SEL)
+            RESULT = A | B;
         else if (MULT_SEL)
             RESULT = A * B; // 64 bit product that we truncate be4 returning
         else if (DIV_SEL) begin
