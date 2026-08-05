@@ -21,42 +21,37 @@
 
 
 module pipelined_board(
-input [15:0] SW,
-    input BTNL, BTNC, CLK,
-    output [15:0] LED
+    input [15:0] SW,
+    input reset, sys_clk,
+    output [15:0] LED,
+    output [6:0] seg,
+    output [3:0] an
     );
     
-    reg [31:0] timer = 32'd0;
-    reg sys_clk = 1'b0; 
+    // Disable 7-segment display by default
+    assign seg = 7'b1111111;
+    assign an = 4'b1111;
     
-    always@ (posedge CLK) begin 
+    reg [31:0] timer = 32'd0;
+    reg proc_clk = 1'b0; 
+    
+    // Create 1Hz automatic clock (toggles every 50,000,000 cycles at 100MHz)
+    always@ (posedge sys_clk) begin 
          timer <= timer + 1'b1;
          
-         if (timer >= 32'd1000000) begin
-            sys_clk <= ~sys_clk;
+         if (timer >= 32'd50000000) begin
+            proc_clk <= ~proc_clk;
             timer <= 32'd0;
         end
     end
     
-    wire RESET;
-    wire BTN_CLK;
+    wire reset_debounced;
     
-    debouncer db1(sys_clk, BTNL, RESET);
-    debouncer db2(sys_clk, BTNC, BTN_CLK);
-    
-    reg btn_clk_prev = 1'b0;
-    
-    wire btn_clk_press;
-    
-    assign btn_clk_press = BTN_CLK & ~btn_clk_prev;
-    
-    always @(posedge sys_clk) begin
-        btn_clk_prev <= BTN_CLK;
-    end
+    debouncer db1(sys_clk, reset, reset_debounced);
     
     wire[16:0] proc_led;
     
-    pipelined_processor pp(btn_clk_press, RESET, SW, proc_led);
+    pipelined_processor pp(proc_clk, reset_debounced, SW, proc_led);
     
     assign LED[14:0] = proc_led[14:0];
     assign LED[15] = proc_led[15] | proc_led[16];

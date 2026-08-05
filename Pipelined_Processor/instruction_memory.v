@@ -5,46 +5,31 @@ module instruction_memory(
     output[31:0] insn_out
     );
     
-    reg[31:0] insn_array[0:31];
+    reg[31:0] insn_array[0:1023];
     
     assign insn_out = insn_array[addr_in];
     
-    always @(posedge clk) begin
-        if (reset) begin
-            //      initial values of the instruction memory :
-            //      insn_0 : load  $1, $0, 0   - load data 0($0) into $1
-            //      insn_1 : load  $2, $0, 1   - load data 1($0) into $2
-            //      insn_2 : noop
-            //      insn_3 : noop
-            //      insn_4 : out $1            - led = 5
-            //      insn_5 : add $3, $1, $2    - add $1 and $2 into 3
-            //      insn_6 : noop
-            //      insn_7 : noop
-            //      insn_8 : noop
-            //      insn_9 : bne $1, $2, 12    - branch will be taken (5 != 8)
-            //      insn_10: noop
-            //      insn_11: noop
-            //      insn_12: dis $3, $1, 2     - cop1 = $1 + 2 = 7, cop2 = 13, flag = 1
-            //      insn_13: out $3            - led = 13
-            //      insn_14: noop
-            //      insn_15: noop
-            
-            insn_array[0] <= 32'h1010;
-            insn_array[1] <= 32'h1021;
-            insn_array[2] <= 32'h0000;
-            insn_array[3] <= 32'h0000;
-            insn_array[4] <= 32'hb100;
-            insn_array[5] <= 32'h8123;
-            insn_array[6] <= 32'h0000;
-            insn_array[7] <= 32'h0000;
-            insn_array[8] <= 32'h0000;
-            insn_array[9] <= 32'hd12c;
-            insn_array[10] <= 32'h0000;
-            insn_array[11] <= 32'h0000;
-            insn_array[12] <= 32'he312;
-            insn_array[13] <= 32'hb300;
-            insn_array[14] <= 32'h0000;
-            insn_array[15] <= 32'h0000;
+    integer i;
+    
+    initial begin
+        // Initialize all 1024 instruction slots to 0 (NOOP)
+        for (i = 0; i < 1024; i = i + 1) begin
+            insn_array[i] = 32'h00000000;
         end
+        
+        // Load Vector 1 from Mem[0] into R1
+        // Load Vector 2 from Mem[1] into R2
+        // VADD vectors into R3
+        // Load limit (15) into R31
+        // VCLIP R3 by R31 into R4
+        // OUT R4
+        
+        insn_array[0] = 32'h1C010000; // LOAD R1, R0, 0
+        insn_array[1] = 32'h1C020001; // LOAD R2, R0, 1
+        insn_array[2] = 32'h40221800; // VADD R3, R1, R2
+        insn_array[3] = 32'h241F000F; // ADDI R31, R0, 15
+        insn_array[4] = 32'hC06027C0; // VCLIP R4, R3, R31
+        insn_array[5] = 32'h34800000; // OUT R4
+    
     end
 endmodule

@@ -22,7 +22,8 @@ module register_file (
 
     // output data
     output [31:0] RA_Out,
-    output [31:0] RB_Out
+    output [31:0] RB_Out,
+    output [31:0] K_Out
 
 );
 
@@ -35,19 +36,20 @@ module register_file (
         // traverse all 32 registers and reset their values to 0
         if (reset) begin
             for (i = 0; i < 32 ; i = i + 1) begin
-                registers[i] = 32'b0;
+                registers[i] <= 32'b0;
             end
         end else if (write_enable) begin
             // write to register RD using the data coming in from RD.
-            registers[RD] <= RD_Data;
+            if (RD != 5'd0) begin
+                registers[RD] <= RD_Data;
+            end
         end
-            // zero registers remains at a constant 0
-            registers[0] <= 16'b0;
-        end
+    end
 
-    // ouput RA and RB data
+    // ouput RA, RB and K data
     assign RA_Out = registers[RA];
     assign RB_Out = registers[RB];
+    assign K_Out = registers[31]; 
 
 
 endmodule

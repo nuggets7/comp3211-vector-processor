@@ -12,7 +12,7 @@ module data_memory (
     output wire [31:0] data_out
 );
 
-    localparam DEPTH = 65536;
+    localparam DEPTH = 16384;
 
     // 2^16 words, each 32 bits wide
     reg [31:0] memory [0:DEPTH-1];
@@ -24,6 +24,9 @@ module data_memory (
         for (i = 0; i < DEPTH; i = i + 1) begin
             memory[i] = 32'b0;
         end
+        // vectors for test script
+        memory[0] = 32'h050A0F14; // Vector 1: [5, 10, 15, 20]
+        memory[1] = 32'h01020304; // Vector 2: [1, 2, 3, 4]
     end
 
     // Synchronous write
