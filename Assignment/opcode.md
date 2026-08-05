@@ -52,7 +52,7 @@ Custom format for coprocessor operations that require three register addresses (
 | **STORE**| `001000` | `DMEM[Rs + imm] = Rt` | `001000 [Rs] [Rt] [16-bit offset]` |
 | **ADDI** | `001001` | `Rd = Rs + imm` | `001001 [Rs] [Rd] [16-bit immediate]` |
 | **BEQ**  | `001010` | Branch if `Rs == Rt` | `001010 [Rs] [Rt] [16-bit offset]` |
-| **BLT**  | `001011` | Branch if `Rs < Rt` | `0001011 [Rs] [Rt] [16-bit offset]` |
+| **BLT**  | `001011` | Branch if `Rs < Rt` | `001011 [Rs] [Rt] [16-bit offset]` |
 | **IN**   | `001100` | Read I/O `Rd` | `001100 00000 [Rd] [16-bit port id]` |
 | **OUT**  | `001101` | Write `Rs` to I/O | `001101 [Rs] 00000 [16-bit port id]` |
 
@@ -72,7 +72,7 @@ Custom format for coprocessor operations that require three register addresses (
 | :--- | :--- | :--- | :--- |
 | **VADD** | `010000` | `DMEM[Rd] = DMEM[Rs] + DMEM[Rt]` | `010000 [Rs] [Rt] [Rd] 00000 000000` |
 | **VSCALE** | `100000` | `DMEM[Rd] = DMEM[Rs] * value[Rk]` | `100000 [Rs] 00000 [Rd] [Rk] 000000` |
-| **VCLIP** | `110000` | `DMEM[Rd] = clip(DMEM[Rs], value[Rk])` | `011010 [Rs] 00000 [Rd] [Rk] 000000` |
+| **VCLIP** | `110000` | `DMEM[Rd] = clip(DMEM[Rs], value[Rk])` | `110000 [Rs] 00000 [Rd] [Rk] 000000` |
 
 ---
 
