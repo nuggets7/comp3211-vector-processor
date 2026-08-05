@@ -1,6 +1,7 @@
 Sample Benchmark
 
 Same but 4 marks fields of 8 bits each, allowing us to use VADD
+There is also no checks for duplicate IDs for simplicity
 Stream raw dataset into DMEM
 
 Each IN input will be an 8 bit value stored in a 32 bit register.
