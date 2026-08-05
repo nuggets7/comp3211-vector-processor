@@ -5,9 +5,10 @@ List of Tasks:
 - COP module- Hugh [done]
 - OP code and CLU- Nishant [done]
 - Regfile - Hugh [done]
-- Program Counter- Esha
-- ALU [SELECT lines for add, sub, mul, div, 2- 32 bit things going in, 1 32 bit going out]- Esha
-- Instruction memory stuff- Nishant
+- Program Counter- Esha [done]
+- ALU [SELECT lines for add, sub, mul, div, 2- 32 bit things going in, 1 32 bit going out]- Esha [done]
+- adders, muxes etc. [done]
+- Instruction memory stuff- Nishant [done]
 - Data memory (RAM)- Rishi
 - Jump instruction (flush pipeline to handle the control hazard)- Granth
 - Link instruction- Granth
