@@ -12,10 +12,7 @@ module instruction_memory(
     integer i;
     
     initial begin
-        // Initialize all 1024 instruction slots to 0 (NOOP)
-        for (i = 0; i < 1024; i = i + 1) begin
-            insn_array[i] = 32'h00000000;
-        end
+        // Initialize all 1024 instruction slots to 0 (NOOP) - Handled by FPGA defaults
         
         // Load Vector 1 from Mem[0] into R1
         // Load Vector 2 from Mem[1] into R2

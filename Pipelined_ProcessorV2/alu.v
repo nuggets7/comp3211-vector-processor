@@ -4,9 +4,6 @@ module alu (
     input ADD_SEL, SUB_SEL, MULT_SEL, DIV_SEL, AND_SEL, OR_SEL,
     output reg [31:0] RESULT
 );
-    reg [63:0] div_temp;
-    integer i;
-
     always @(*) begin
         if (ADD_SEL)
             RESULT = A + B;
@@ -21,17 +18,8 @@ module alu (
         else if (DIV_SEL) begin
             if (B == 32'b0)
                 RESULT = 32'hFFFFFFFF; // divide by zero
-            else begin
-                div_temp = {32'b0, A};
-                for (i = 0; i < 32; i = i + 1) begin
-                    div_temp = div_temp << 1;
-                    if (div_temp[63:32] >= B) begin
-                        div_temp[63:32] = div_temp[63:32] - B;
-                        div_temp[0] = 1'b1;
-                    end
-                end
-                RESULT = div_temp[31:0];
-            end
+            else
+                RESULT = A / B;
         end else
             RESULT = 32'b0;
     end

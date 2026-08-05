@@ -28,7 +28,6 @@ module register_file (
 );
 
     // 32 registers of 32 bit widths
-    (* ram_style = "registers" *)
     reg [31:0] registers [0:31];
 
     integer i;
@@ -51,6 +50,5 @@ module register_file (
     assign RA_Out = registers[RA];
     assign RB_Out = registers[RB];
     assign K_Out = registers[31]; 
-
 
 endmodule

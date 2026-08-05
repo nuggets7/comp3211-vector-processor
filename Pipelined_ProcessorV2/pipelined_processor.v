@@ -1,105 +1,29 @@
 `timescale 1ns / 1ps
 
 module pipelined_processor(
-    input clk, 
-    input reset, 
+    input clk,
+    input reset,
     input [15:0] SW,
-    output [16:0] LED
+    output wire [16:0] LED,
+    output wire [9:0] pc_out
 
 );
 
+    // ==========================================
+    // IF Stage
+    // ==========================================
 
-    // --- AUTO-MOVED DECLARATIONS ---
-    wire stall_pipeline;
     wire [9:0] sig_curr_pc;
     wire [9:0] sig_next_pc;
     wire [9:0] sig_pc_in;
     wire [31:0] sig_insn;
+
     wire ex_branch_taken;
     wire id_JUMP_SEL;
     wire id_JUMP_REG;
     wire [9:0] id_jump_target;
     wire [9:0] ex_branch_target;
     wire [31:0] id_ra_data;
-    wire hazard_stall;
-    wire overall_stall;
-    reg [31:0] ifid_insn;
-    reg [9:0] ifid_pc_plus_1;
-    wire jump_flush;
-    wire link_flush;
-    wire [1:0] id_cop_op;
-    wire [3:0] id_opcode;
-    wire [4:0] id_rs;
-    wire [4:0] id_rt;
-    wire [4:0] id_rd;
-    wire [15:0] id_imm;
-    wire id_REG_WRITE, id_ITYPE_RD, id_ITYPE_RT, id_USE_IMM, id_ALU_SRC;
-    wire id_MEM_WRITE, id_MEM_READ;
-    wire id_AND_SEL, id_OR_SEL;
-    wire id_ADD_SEL, id_SUB_SEL, id_MULT_SEL, id_DIV_SEL;
-    wire id_BRANCH, id_BRANCH_EQ, id_BRANCH_LT;
-    wire id_IN_SEL, id_OUT_SEL;
-    wire [31:0] id_rb_data, id_k_data;
-    wire wb_reg_write;
-    wire [4:0] wb_write_reg;
-    wire [31:0] wb_write_data;
-    wire io_reg_write_enable;
-    wire [4:0] io_reg_write_register;
-    wire [31:0] io_reg_write_data;
-    wire io_out_valid;
-    wire [15:0] io_out_port;
-    wire [31:0] io_out_data;
-    reg id_valid;
-    wire id_rs_required_in_id;
-    wire hazard_in_ex;
-    wire hazard_in_mem;
-    wire hazard_in_wb;
-    wire id_stage_hazard;
-    wire load_use_hazard;
-    wire wb_reg_write_final;
-    wire [31:0] id_imm_ext;
-    wire id_is_cop;
-    wire [4:0] id_write_reg;
-    wire jump_taken;
-    wire [31:0] jump_target;
-    wire link_jump_taken;
-    wire [9:0] link_jump_target;
-    wire ra_write_enable;
-    wire [4:0] ra_write_register;
-    wire [31:0] ra_write_data;
-    reg [31:0] idex_ra_data, idex_rb_data, idex_k_data, idex_imm_ext;
-    reg [4:0] idex_write_reg, idex_rs, idex_rt;
-    reg [9:0] idex_pc_plus_1;
-    reg idex_REG_WRITE, idex_ALU_SRC, idex_MEM_WRITE, idex_MEM_READ;
-    reg idex_AND_SEL, idex_OR_SEL, idex_ADD_SEL, idex_SUB_SEL, idex_MULT_SEL, idex_DIV_SEL;
-    reg idex_BRANCH, idex_BRANCH_EQ, idex_BRANCH_LT;
-    reg idex_IN_SEL, idex_OUT_SEL, idex_JUMP_SEL;
-    reg idex_is_cop;
-    reg [1:0] idex_cop_op;
-    wire [31:0] exmem_forward_data;
-    wire [31:0] ex_alu_b;
-    wire [31:0] ex_alu_result;
-    wire [31:0] ex_cop_result;
-    wire ex_eq;
-    wire ex_lt;
-    reg [31:0] exmem_alu_result, exmem_cop_result, exmem_rb_data, exmem_ra_data;
-    reg [4:0] exmem_write_reg;
-    reg [9:0] exmem_pc_plus_1;
-    reg exmem_REG_WRITE, exmem_MEM_WRITE, exmem_MEM_READ;
-    reg exmem_IN_SEL, exmem_OUT_SEL, exmem_JUMP_SEL, exmem_is_cop;
-    wire [31:0] mem_data_out;
-    reg [31:0] memwb_alu_result, memwb_cop_result, memwb_mem_data, memwb_ra_data;
-    reg [4:0] memwb_write_reg;
-    reg [9:0] memwb_pc_plus_1;
-    reg memwb_REG_WRITE, memwb_IN_SEL, memwb_OUT_SEL, memwb_JUMP_SEL, memwb_is_cop, memwb_MEM_READ;
-    reg [16:0] led_reg;
-    // -------------------------------
-
-    // ==========================================
-    // IF Stage
-    // ==========================================
-
-
 
 
     // program_counter.v
@@ -110,7 +34,9 @@ module pipelined_processor(
         .addr_out(sig_curr_pc)
     );
 
-    assign overall_stall = stall_pipeline | hazard_stall;
+    wire hazard_stall;
+    wire stall_pipeline;
+    wire overall_stall = stall_pipeline | hazard_stall;
 
     // adder_10b.v
     adder_10b next_PC(
@@ -136,7 +62,11 @@ module pipelined_processor(
     // ==========================================
     // IF/ID Pipeline Register
     // ==========================================
+    reg [31:0] ifid_insn;
+    reg [9:0] ifid_pc_plus_1;
 
+    wire jump_flush;
+    wire link_flush;
 
     always @(posedge clk) begin
         // Flush on branch or jump
@@ -152,15 +82,21 @@ module pipelined_processor(
     // ==========================================
     // ID Stage
     // ==========================================
-    assign id_cop_op = ifid_insn[31:30];
-    assign id_opcode = ifid_insn[29:26];
-    assign id_rs = ifid_insn[25:21];
-    assign id_rt = ifid_insn[20:16];
-    assign id_rd = ifid_insn[15:11];
-    assign id_imm = ifid_insn[15:0];
+    wire [1:0] id_cop_op = ifid_insn[31:30];
+    wire [3:0] id_opcode = ifid_insn[29:26];
+    wire [4:0] id_rs = ifid_insn[25:21];
+    wire [4:0] id_rt = ifid_insn[20:16];
+    wire [4:0] id_rd = ifid_insn[15:11];
+    wire [15:0] id_imm = ifid_insn[15:0];
     assign id_jump_target = ifid_insn[9:0];
 
     // Control signals
+    wire id_REG_WRITE, id_ITYPE_RD, id_ITYPE_RT, id_USE_IMM, id_ALU_SRC;
+    wire id_MEM_WRITE, id_MEM_READ;
+    wire id_AND_SEL, id_OR_SEL;
+    wire id_ADD_SEL, id_SUB_SEL, id_MULT_SEL, id_DIV_SEL;
+    wire id_BRANCH, id_BRANCH_EQ, id_BRANCH_LT;
+    wire id_IN_SEL, id_OUT_SEL;
 
     // control_unit.v
     control_unit ctrl_unit(
@@ -174,8 +110,8 @@ module pipelined_processor(
         .MEM_READ(id_MEM_READ),
         .AND_SEL(id_AND_SEL),
         .OR_SEL(id_OR_SEL),
-        .JUMP_SEL(id_JUMP_SEL),
-        .JUMP_REG(id_JUMP_REG),
+        .JUMP_SEL(),
+        .JUMP_REG(),
         .ADD_SEL(id_ADD_SEL),
         .SUB_SEL(id_SUB_SEL),
         .MULT_SEL(id_MULT_SEL),
@@ -187,26 +123,48 @@ module pipelined_processor(
         .OUT_SEL(id_OUT_SEL)
     );
 
+    wire [31:0] id_rb_data, id_k_data;
+    wire wb_reg_write;
+    wire [4:0] wb_write_reg;
+    wire [31:0] wb_write_data;
     
+    wire io_reg_write_enable;
+    wire [4:0] io_reg_write_register;
+    wire [31:0] io_reg_write_data;
+    wire io_out_valid;
+    wire [15:0] io_out_port;
+    wire [31:0] io_out_data;
     
+    reg id_valid;
     always @(posedge clk) begin
-        if (reset || ex_branch_taken || ((jump_flush || link_flush) && !overall_stall) || overall_stall) begin
+        if (reset || ex_branch_taken || ((jump_flush || link_flush) && !overall_stall)) begin
             id_valid <= 1'b0;
-        end else begin
+        end else if (stall_pipeline) begin
+            // IO control stall (IN instruction): clear to prevent re-execution
+            id_valid <= 1'b0;
+        end else if (!hazard_stall) begin
+            // No stall: new instruction entering IF/ID next cycle
             id_valid <= 1'b1;
         end
+        // During hazard_stall: id_valid RETAINS its value so the stalled
+        // instruction (e.g. OUT) gets executed when the hazard clears
     end
 
     // Hazard Detection Unit
-    assign id_rs_required_in_id = (id_opcode == 6'b000100) /* JR */ | (id_opcode == 6'b001101) /* OUT */;
+    // Combined "will write" signals that include coprocessor instructions
+    wire idex_will_write  = idex_REG_WRITE  | idex_is_cop;
+    wire exmem_will_write = exmem_REG_WRITE | exmem_is_cop;
+    wire memwb_will_write = memwb_REG_WRITE | memwb_is_cop;
+
+    wire id_rs_required_in_id = (id_opcode == 4'b0100) /* JR */ | (id_opcode == 4'b1101) /* OUT */;
     
-    assign hazard_in_ex = idex_REG_WRITE && (idex_write_reg != 5'd0) && (idex_write_reg == id_rs);
-    assign hazard_in_mem = exmem_REG_WRITE && (exmem_write_reg != 5'd0) && (exmem_write_reg == id_rs);
-    assign hazard_in_wb = memwb_REG_WRITE && (memwb_write_reg != 5'd0) && (memwb_write_reg == id_rs);
+    wire hazard_in_ex = idex_will_write && (idex_write_reg != 5'd0) && (idex_write_reg == id_rs);
+    wire hazard_in_mem = exmem_will_write && (exmem_write_reg != 5'd0) && (exmem_write_reg == id_rs);
+    wire hazard_in_wb = memwb_will_write && (memwb_write_reg != 5'd0) && (memwb_write_reg == id_rs);
     
-    assign id_stage_hazard = id_rs_required_in_id && (hazard_in_ex | hazard_in_mem | hazard_in_wb);
+    wire id_stage_hazard = id_rs_required_in_id && (hazard_in_ex | hazard_in_mem | hazard_in_wb);
     
-    assign load_use_hazard = idex_MEM_READ && ((idex_write_reg == id_rs) || (idex_write_reg == id_rt) || (id_is_cop && idex_write_reg == 5'd31));
+    wire load_use_hazard = idex_MEM_READ && ((idex_write_reg == id_rs) || (idex_write_reg == id_rt) || (id_is_cop && idex_write_reg == 5'd31));
     
     assign hazard_stall = load_use_hazard | id_stage_hazard;
 
@@ -230,11 +188,14 @@ module pipelined_processor(
         .out_data(io_out_data)
     );
 
-    assign wb_reg_write_final = wb_reg_write | io_reg_write_enable | ra_write_enable;
+    wire wb_reg_write_final = wb_reg_write | io_reg_write_enable | ra_write_enable;
     wire [4:0] wb_write_reg_final = io_reg_write_enable ? io_reg_write_register :
                                     ra_write_enable ? ra_write_register : wb_write_reg;
     wire [31:0] wb_write_data_final = io_reg_write_enable ? io_reg_write_data :
                                       ra_write_enable ? ra_write_data : wb_write_data;
+
+    wire [31:0] debug_r4;
+    wire [31:0] debug_r5;
 
     // register_file.v
     register_file register_file_inst(
@@ -250,6 +211,7 @@ module pipelined_processor(
         .K_Out(id_k_data)
     );
 
+    wire [31:0] id_imm_ext;
 
     // sign_extend_16to32.v
     sign_extend_16to32 sign_ext(
@@ -257,13 +219,16 @@ module pipelined_processor(
         .data_out(id_imm_ext)
     );
 
-    assign id_is_cop = (id_cop_op != 2'b00);
+    wire id_is_cop = (id_cop_op != 2'b00);
+    wire [4:0] id_write_reg;
     
     // Determine write destination register
     assign id_write_reg = id_is_cop ? id_rd :
                           id_ITYPE_RD ? id_rt : id_rd;
                           
     // Jump and Link Controls
+    wire jump_taken;
+    wire [31:0] jump_target;
     
     // jump_control.v
     jump_control jump_ctrl(
@@ -273,6 +238,11 @@ module pipelined_processor(
         .flush_pipeline(jump_flush)
     );
     
+    wire link_jump_taken;
+    wire [9:0] link_jump_target;
+    wire ra_write_enable;
+    wire [4:0] ra_write_register;
+    wire [31:0] ra_write_data;
     
     // link_control.v
     link_control link_ctrl(
@@ -290,6 +260,15 @@ module pipelined_processor(
     // ==========================================
     // ID/EX Pipeline Register
     // ==========================================
+    reg [31:0] idex_ra_data, idex_rb_data, idex_k_data, idex_imm_ext;
+    reg [4:0] idex_write_reg, idex_rs, idex_rt;
+    reg [9:0] idex_pc_plus_1;
+    reg idex_REG_WRITE, idex_ALU_SRC, idex_MEM_WRITE, idex_MEM_READ;
+    reg idex_AND_SEL, idex_OR_SEL, idex_ADD_SEL, idex_SUB_SEL, idex_MULT_SEL, idex_DIV_SEL;
+    reg idex_BRANCH, idex_BRANCH_EQ, idex_BRANCH_LT;
+    reg idex_IN_SEL, idex_OUT_SEL, idex_JUMP_SEL;
+    reg idex_is_cop;
+    reg [1:0] idex_cop_op;
 
     always @(posedge clk) begin
         if (reset || ex_branch_taken || overall_stall) begin
@@ -348,16 +327,17 @@ module pipelined_processor(
     // EX Stage & Forwarding Unit
     // ==========================================
     
-    wire [1:0] forward_a = (exmem_REG_WRITE && (exmem_write_reg != 5'd0) && (exmem_write_reg == idex_rs)) ? 2'b10 :
-                           (memwb_REG_WRITE && (memwb_write_reg != 5'd0) && (memwb_write_reg == idex_rs)) ? 2'b01 : 2'b00;
+    wire [1:0] forward_a = (exmem_will_write && (exmem_write_reg != 5'd0) && (exmem_write_reg == idex_rs)) ? 2'b10 :
+                           (memwb_will_write && (memwb_write_reg != 5'd0) && (memwb_write_reg == idex_rs)) ? 2'b01 : 2'b00;
 
-    wire [1:0] forward_b = (exmem_REG_WRITE && (exmem_write_reg != 5'd0) && (exmem_write_reg == idex_rt)) ? 2'b10 :
-                           (memwb_REG_WRITE && (memwb_write_reg != 5'd0) && (memwb_write_reg == idex_rt)) ? 2'b01 : 2'b00;
+    wire [1:0] forward_b = (exmem_will_write && (exmem_write_reg != 5'd0) && (exmem_write_reg == idex_rt)) ? 2'b10 :
+                           (memwb_will_write && (memwb_write_reg != 5'd0) && (memwb_write_reg == idex_rt)) ? 2'b01 : 2'b00;
 
-    wire [1:0] forward_k = (exmem_REG_WRITE && (exmem_write_reg != 5'd0) && (exmem_write_reg == 5'd31)) ? 2'b10 :
-                           (memwb_REG_WRITE && (memwb_write_reg != 5'd0) && (memwb_write_reg == 5'd31)) ? 2'b01 : 2'b00;
+    wire [1:0] forward_k = (exmem_will_write && (exmem_write_reg != 5'd0) && (exmem_write_reg == 5'd31)) ? 2'b10 :
+                           (memwb_will_write && (memwb_write_reg != 5'd0) && (memwb_write_reg == 5'd31)) ? 2'b01 : 2'b00;
 
-    assign exmem_forward_data = exmem_is_cop ? exmem_cop_result : exmem_alu_result;
+    wire [31:0] exmem_forward_data = exmem_MEM_READ ? mem_data_out :
+                                     exmem_is_cop ? exmem_cop_result : exmem_alu_result;
 
     wire [31:0] forward_a_val = (forward_a == 2'b10) ? exmem_forward_data :
                                 (forward_a == 2'b01) ? wb_write_data :
@@ -371,7 +351,8 @@ module pipelined_processor(
                                 (forward_k == 2'b01) ? wb_write_data :
                                 idex_k_data;
 
-    assign ex_alu_b = idex_ALU_SRC ? idex_imm_ext : forward_b_val;
+    wire [31:0] ex_alu_b = idex_ALU_SRC ? idex_imm_ext : forward_b_val;
+    wire [31:0] ex_alu_result;
     
     // alu.v
     alu ALU(
@@ -386,6 +367,7 @@ module pipelined_processor(
         .RESULT(ex_alu_result)
     );
 
+    wire [31:0] ex_cop_result;
 
 
     // co_processor.v
@@ -398,14 +380,19 @@ module pipelined_processor(
     );
 
     // Branch resolution
-    assign ex_eq = (forward_a_val == forward_b_val);
-    assign ex_lt = ($signed(forward_a_val) < $signed(forward_b_val));
+    wire ex_eq = (forward_a_val == forward_b_val);
+    wire ex_lt = ($signed(forward_a_val) < $signed(forward_b_val));
     assign ex_branch_taken = idex_BRANCH & ((idex_BRANCH_EQ & ex_eq) | (idex_BRANCH_LT & ex_lt));
     assign ex_branch_target = idex_pc_plus_1 + idex_imm_ext[9:0];
 
     // ==========================================
     // EX/MEM Pipeline Register
     // ==========================================
+    reg [31:0] exmem_alu_result, exmem_cop_result, exmem_rb_data, exmem_ra_data;
+    reg [4:0] exmem_write_reg;
+    reg [9:0] exmem_pc_plus_1;
+    reg exmem_REG_WRITE, exmem_MEM_WRITE, exmem_MEM_READ;
+    reg exmem_IN_SEL, exmem_OUT_SEL, exmem_JUMP_SEL, exmem_is_cop;
 
     always @(posedge clk) begin
         if (reset) begin
@@ -440,6 +427,7 @@ module pipelined_processor(
     // ==========================================
     // MEM Stage
     // ==========================================
+    wire [31:0] mem_data_out;
 
     // data_memory.v
     data_memory data_mem(
@@ -447,7 +435,7 @@ module pipelined_processor(
         .clk(clk),
         .read_enable(exmem_MEM_READ),
         .write_enable(exmem_MEM_WRITE),
-        .addr_in(exmem_alu_result[15:0]),
+        .addr_in(exmem_alu_result[9:0]),
         .write_data(exmem_rb_data),
         .data_out(mem_data_out)
     );
@@ -455,6 +443,10 @@ module pipelined_processor(
     // ==========================================
     // MEM/WB Pipeline Register
     // ==========================================
+    reg [31:0] memwb_alu_result, memwb_cop_result, memwb_mem_data, memwb_ra_data;
+    reg [4:0] memwb_write_reg;
+    reg [9:0] memwb_pc_plus_1;
+    reg memwb_REG_WRITE, memwb_IN_SEL, memwb_OUT_SEL, memwb_JUMP_SEL, memwb_is_cop, memwb_MEM_READ;
 
     always @(posedge clk) begin
         if (reset) begin
@@ -494,6 +486,7 @@ module pipelined_processor(
     assign wb_reg_write = memwb_REG_WRITE | memwb_is_cop;
     assign wb_write_reg = memwb_write_reg;
 
+    reg [16:0] led_reg;
     always @(posedge clk) begin
         if (reset) begin
             led_reg <= 17'b0;
@@ -501,6 +494,11 @@ module pipelined_processor(
             led_reg <= {1'b0, io_out_data[15:0]};
         end
     end
+    
+    // Output LED
     assign LED = led_reg;
+
+    // Expose current PC for 7-segment display
+    assign pc_out = sig_curr_pc;
 
 endmodule

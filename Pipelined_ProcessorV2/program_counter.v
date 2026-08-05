@@ -1,10 +1,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer: 
+// Engineer: Esha Tripathi
 // 
-// Create Date: 16.09.2019 15:56:14
+// Create Date: 13.09.2019 16:49:25
 // Design Name: 
-// Module Name: adder_16b
+// Module Name: program_counter
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -15,16 +15,18 @@
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-//  ---------------------------------------------------------------------------
-//    -- adder_16b.vhd - 16-bit Adder Implementation
-//    --
-//    --
+// 
 //-- Copyright (C) 2006 
 //-- All Rights Reserved. 
 //-- Written by Lih Wen Koh (lwkoh@cse.unsw.edu.au) in VHDL
 //-- Translated into Verilog by Sajid Hussain (sajid.hussain@unsw.edu.au)
 //--
-//    --
+
+//    ---------------------------------------------------------------------------
+//    -- program_counter.vhd - Program Counter Implementation 
+//    -- 
+//    -- Note : The program counter is simply a register that updates its output 
+//    -- on the rising clock edge.
 //    -- The single-cycle processor core is provided AS IS, with no warranty of 
 //    -- any kind, express or implied. The user of the program accepts full 
 //    -- responsibility for the application of the program and the use of any 
@@ -36,15 +38,17 @@
 //    -- noncommercial research, and noncommercial scholarship purposes provided 
 //    -- that this notice in its entirety accompanies all copies.
 //    --
-//    ---------------------------------------------------------------------------
+    
 //////////////////////////////////////////////////////////////////////////////////
 
-module adder_16b(
-    input[15:0] src_a, 
-    input[15:0] src_b, 
-    output[15:0] sum, 
-    output carry_out
-    );  
-    
-    assign {carry_out, sum} = src_a + src_b;
+// supports 1024 instructions
+
+module program_counter(input reset, input clk, input[9:0] addr_in, output reg[9:0] addr_out);
+    always @(posedge clk) begin
+        if (reset == 1) begin
+            addr_out <= 10'd0;
+        end else begin
+            addr_out <= addr_in;
+        end
+    end
 endmodule
